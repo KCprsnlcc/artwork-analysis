@@ -4,11 +4,39 @@ import json
 import sys
 import os
 import argparse
+import threading
+import time
 
 # Ollama endpoint configuration
 OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
-VISION_MODEL = "llava"  # Step 1: Image analysis
-TEXT_MODEL = "llama3"   # Step 2 & 3: Essay analysis and scoring
+VISION_MODEL = "llava" 
+TEXT_MODEL = "llama3"   
+
+# Loader spinner globals
+_loader_running = False
+_loader_thread = None
+
+def _loader_spinner(message="Loading"):
+    spinner = ['|', '/', '-', '\\']
+    idx = 0
+    while _loader_running:
+        print(f"\r{message}... {spinner[idx % len(spinner)]}", end='', flush=True)
+        idx += 1
+        time.sleep(0.1)
+    print("\r" + " " * (len(message) + 5) + "\r", end='', flush=True)
+
+def start_loader(message="Loading"):
+    global _loader_running, _loader_thread
+    _loader_running = True
+    _loader_thread = threading.Thread(target=_loader_spinner, args=(message,))
+    _loader_thread.start()
+
+def stop_loader():
+    global _loader_running, _loader_thread
+    _loader_running = False
+    if _loader_thread:
+        _loader_thread.join()
+        _loader_thread = None
 
 def encode_image_to_base64(image_path):
     """Encodes an image file to base64 string."""
@@ -19,8 +47,8 @@ def encode_image_to_base64(image_path):
     except Exception as e:
         raise Exception(f"Error encoding image: {e}")
 
-def query_ollama_model(model_name, prompt, image_path=None):
-    """Generic function to query Ollama models with optional image support."""
+def query_ollama_model(model_name, prompt, image_path=None, loader_message=None):
+    """Generic function to query Ollama models with optional image support and loader."""
     payload = {
         "model": model_name,
         "prompt": prompt,
@@ -35,6 +63,8 @@ def query_ollama_model(model_name, prompt, image_path=None):
         except Exception as e:
             return f"Image encoding failed: {e}"
     
+    if loader_message:
+        start_loader(loader_message)
     try:
         response = requests.post(OLLAMA_ENDPOINT, json=payload)
         response.raise_for_status()
@@ -42,6 +72,9 @@ def query_ollama_model(model_name, prompt, image_path=None):
         return result.get("response", "No response text returned.")
     except requests.RequestException as e:
         return f"Request failed: {e}"
+    finally:
+        if loader_message:
+            stop_loader()
 
 def step1_analyze_artwork(image_path):
     """Step 1: Analyze the student's artwork using llava model."""
@@ -60,7 +93,7 @@ def step1_analyze_artwork(image_path):
     Focus only on analyzing the visual artwork/poster portion. Do not analyze the text explanation yet - that will be done separately.
     """
     
-    artwork_analysis = query_ollama_model(VISION_MODEL, artwork_prompt, image_path)
+    artwork_analysis = query_ollama_model(VISION_MODEL, artwork_prompt, image_path, loader_message="Analyzing artwork")
     print("Artwork Analysis:")
     print(artwork_analysis)
     print("\n" + "="*50 + "\n")
@@ -89,7 +122,7 @@ def step2_extract_and_analyze_essay(image_path):
     ESSAY ANALYSIS: [your detailed analysis of the written component]
     """
     
-    essay_analysis = query_ollama_model(VISION_MODEL, essay_prompt, image_path)
+    essay_analysis = query_ollama_model(VISION_MODEL, essay_prompt, image_path, loader_message="Extracting and analyzing essay")
     print("Essay Extraction and Analysis:")
     print(essay_analysis)
     print("\n" + "="*50 + "\n")
@@ -144,7 +177,7 @@ def step3_score_combined_work(artwork_analysis, essay_analysis):
     Format your response clearly with the final score prominently displayed.
     """
     
-    final_evaluation = query_ollama_model(TEXT_MODEL, scoring_prompt)
+    final_evaluation = query_ollama_model(TEXT_MODEL, scoring_prompt, loader_message="Scoring combined work")
     print("Final Evaluation and Score:")
     print(final_evaluation)
     
