@@ -1,13 +1,13 @@
 # Artwork Analysis Tool
 
-A command-line tool for evaluating student submissions related to cybersecurity and data privacy. This tool analyzes images containing both artwork/posters and written explanations, providing comprehensive feedback and scoring.
+A command-line tool for evaluating student artwork submissions with written explanations. This tool analyzes images containing both visual work and written components, providing feedback and scoring.
 
 ## Features
 
 - **Artwork Analysis**: Evaluates visual elements, theme representation, creativity, technical execution, and message clarity of the artwork.
-- **Essay Extraction and Analysis**: Extracts the written explanation from the image and analyzes it for theme understanding, interpretation depth, clarity, and conceptual thinking.
+- **Essay Extraction and Analysis**: Extracts the written explanation from the image and analyzes it for understanding, interpretation depth, clarity, and conceptual thinking.
 - **Rubric-Based Scoring**: Combines both analyses to provide a final score (0-100) and letter grade based on a detailed rubric.
-- **Comprehensive Reporting**: Generates detailed reports that can be displayed in the terminal or saved to a file.
+- **Reporting**: Generates detailed reports that can be displayed in the terminal or saved to a file.
 
 ## Prerequisites
 
@@ -65,6 +65,10 @@ Evaluation criteria include:
 - Technical quality and execution
 - Narrative depth and insight
 - Overall coherence between artwork and explanation
+
+## Example Application
+
+While this tool can be adapted for various types of art assignments, the current implementation includes prompts focused on evaluating cybersecurity and data privacy themed artwork. You can modify the prompt templates in the code to adapt it for other types of assignments.
 
 ## Sample Files
 
